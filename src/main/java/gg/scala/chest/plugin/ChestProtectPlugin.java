@@ -35,7 +35,7 @@ import java.util.UUID;
 @PluginDependency("scala-commons")
 public class ChestProtectPlugin extends ExtendedScalaPlugin {
 
-    protected final NamespacedKey ownerKey = new NamespacedKey(this, "owner");
+    protected final NamespacedKey ownerKey = new NamespacedKey(this, "chest-owner");
 
     @ContainerEnable
     public void containerEnable() {
