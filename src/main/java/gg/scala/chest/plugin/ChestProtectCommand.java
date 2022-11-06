@@ -9,7 +9,7 @@ import gg.scala.flavor.inject.Inject;
 import me.lucko.helper.Events;
 import me.lucko.helper.Schedulers;
 import me.lucko.helper.terminable.composite.CompositeTerminable;
-import net.evilblock.cubed.util.CC;
+import org.bukkit.ChatColor;
 import org.bukkit.block.Chest;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -38,7 +38,7 @@ public class ChestProtectCommand extends ScalaCommand {
     public void protect(@NotNull ScalaPlayer player) {
         if (prompting.contains(player.getUniqueId())) {
             throw new ConditionFailedException(
-                CC.RED + "You're already in a protection prompt. Right click a chest to protect/unprotect it!"
+                ChatColor.RED + "You're already in a protection prompt. Right click a chest to protect/unprotect it!"
             );
         }
 
@@ -48,7 +48,7 @@ public class ChestProtectCommand extends ScalaCommand {
         prompting.add(player.getUniqueId());
 
         player.sendMessage(
-            CC.GREEN + "click a chest to protect/unprotect it... you have 10 seconds!"
+            ChatColor.GREEN + "click a chest to protect/unprotect it... you have 10 seconds!"
         );
 
         Schedulers
@@ -78,7 +78,7 @@ public class ChestProtectCommand extends ScalaCommand {
             )
             .handler(event -> {
                 if (!(event.getClickedBlock().getState() instanceof final Chest chest)) {
-                    player.sendMessage(CC.RED + "You did not click a chest block!");
+                    player.sendMessage(ChatColor.RED + "You did not click a chest block!");
                     terminable.closeAndReportException();
                     return;
                 }
@@ -94,7 +94,7 @@ public class ChestProtectCommand extends ScalaCommand {
                     final UUID uuid = UUID.fromString(owner);
 
                     if (!player.getUniqueId().equals(uuid)) {
-                        player.sendMessage(CC.RED + "You cannot un-protect this chest as you do not own it!");
+                        player.sendMessage(ChatColor.RED + "You cannot un-protect this chest as you do not own it!");
                         terminable.closeAndReportException();
                         return;
                     }
@@ -102,7 +102,7 @@ public class ChestProtectCommand extends ScalaCommand {
                     chest.getPersistentDataContainer().remove(this.plugin.ownerKey);
                     chest.update();
 
-                    player.sendMessage(CC.RED + "You are no longer protecting this chest!");
+                    player.sendMessage(ChatColor.RED + "You are no longer protecting this chest!");
 
                     terminable.closeAndReportException();
                     return;
@@ -118,7 +118,7 @@ public class ChestProtectCommand extends ScalaCommand {
                 chest.update();
 
                 player.sendMessage(
-                    CC.GREEN + "You are now protecting this chest!"
+                    ChatColor.GREEN + "You are now protecting this chest!"
                 );
 
                 terminable.closeAndReportException();

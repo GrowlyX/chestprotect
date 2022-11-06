@@ -7,16 +7,13 @@ import gg.scala.commons.core.plugin.Plugin;
 import gg.scala.commons.core.plugin.PluginAuthor;
 import gg.scala.commons.core.plugin.PluginDependency;
 import me.lucko.helper.Events;
-import me.lucko.helper.metadata.MetadataKey;
-import me.lucko.helper.metadata.MetadataMap;
-import net.evilblock.cubed.util.CC;
+import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +92,7 @@ public class ChestProtectPlugin extends ExtendedScalaPlugin {
                     .INSTANCE.username(uuid);
 
                 player.sendMessage(
-                    CC.RED + "You cannot " + action + " this chest as " + username + " has locked it."
+                    ChatColor.RED + "You cannot " + action + " this chest as " + username + " has locked it."
                 );
                 return true;
             }
