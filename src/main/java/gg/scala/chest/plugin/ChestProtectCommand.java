@@ -48,7 +48,7 @@ public class ChestProtectCommand extends ScalaCommand {
         prompting.add(player.getUniqueId());
 
         player.sendMessage(
-            CC.GREEN + "Right click a chest to protect/unprotect it... You have 10 seconds!"
+            CC.GREEN + "click a chest to protect/unprotect it... you have 10 seconds!"
         );
 
         Schedulers

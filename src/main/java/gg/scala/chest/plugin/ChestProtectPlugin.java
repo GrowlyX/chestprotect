@@ -15,6 +15,7 @@ import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
@@ -40,19 +41,23 @@ public class ChestProtectPlugin extends ExtendedScalaPlugin {
     public void containerEnable() {
         Events
             .subscribe(
-                PlayerInteractEvent.class,
+                InventoryOpenEvent.class,
                 EventPriority.LOWEST
             )
             .filter(event ->
-                event.getClickedBlock() != null &&
-                event.getClickedBlock().getState() instanceof Chest
+                event.getInventory().getHolder() instanceof Chest
             )
             .handler(event -> {
                 final Chest chest = (Chest) event
-                    .getClickedBlock().getState();
+                    .getInventory().getHolder();
 
-                if (ensureChestOwnership(chest, event.getPlayer(), "open")) {
-                    event.setCancelled(true);
+                if (chest != null)
+                {
+                    if (ensureChestOwnership(
+                        chest, (Player) event.getPlayer(), "open"
+                    )) {
+                        event.setCancelled(true);
+                    }
                 }
             })
             .bindWith(this);
