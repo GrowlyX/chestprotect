@@ -6,15 +6,18 @@ import gg.scala.commons.annotations.commands.AutoRegister;
 import gg.scala.commons.command.ScalaCommand;
 import gg.scala.commons.issuer.ScalaPlayer;
 import gg.scala.flavor.inject.Inject;
+import me.lucko.helper.Events;
+import me.lucko.helper.terminable.composite.CompositeTerminable;
 import net.evilblock.cubed.util.CC;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.util.BlockIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author GrowlyX
@@ -29,71 +32,75 @@ public class ChestProtectCommand extends ScalaCommand
     @CommandAlias("chestprotect|protect|cp|chestprot")
     public void protect(@NotNull ScalaPlayer player)
     {
-        final Block targetBlock = this.getTargetBlock(player, 3);
-
-        if (!(targetBlock instanceof final Chest chest))
-        {
-            throw new ConditionFailedException(
-                "You are not looking at a chest!"
-            );
-        }
-
-        final String owner = chest
-            .getPersistentDataContainer()
-            .get(
-                this.plugin.ownerKey,
-                PersistentDataType.STRING
-            );
-
-        if (owner != null)
-        {
-            final UUID uuid = UUID.fromString(owner);
-
-            if (!player.getUniqueId().equals(uuid)) {
-                throw new ConditionFailedException(
-                    "You cannot un-protect this chest as you do not own it!"
-                );
-            }
-
-            chest.getPersistentDataContainer().remove(this.plugin.ownerKey);
-            player.sendMessage(CC.RED + "You are no longer protecting this chest!");
-            return;
-        }
-
-        chest
-            .getPersistentDataContainer()
-            .set(
-                this.plugin.ownerKey,
-                PersistentDataType.STRING,
-                player.getUniqueId().toString()
-            );
+        final CompositeTerminable terminable = CompositeTerminable.create();
 
         player.sendMessage(
-            CC.GREEN + "You are now protecting this chest!"
+            CC.GREEN + "Right click a chest to protect/unprotect it..."
         );
-    }
 
-    @NotNull
-    public final Block getTargetBlock(
-        @NotNull ScalaPlayer player, int range
-    ) {
-        final BlockIterator blockIterator =
-            new BlockIterator(
-                player.bukkit(), range
-            );
+        Events
+            .subscribe(
+                PlayerQuitEvent.class
+            )
+            .handler(event -> {
+                terminable.closeAndReportException();
+            })
+            .bindWith(terminable);
 
-        Block lastBlock = blockIterator.next();
+        Events
+            .subscribe(
+                PlayerInteractEvent.class,
+                EventPriority.HIGHEST
+            )
+            .filter(event ->
+                event.getClickedBlock() != null
+            )
+            .handler(event -> {
+                if (!(event.getClickedBlock() instanceof final Chest chest))
+                {
+                    player.sendMessage(CC.RED + "You did not click a chest block!");
+                    terminable.closeAndReportException();
+                    return;
+                }
 
-        while (blockIterator.hasNext()) {
-            lastBlock = blockIterator.next();
+                final String owner = chest
+                    .getPersistentDataContainer()
+                    .get(
+                        this.plugin.ownerKey,
+                        PersistentDataType.STRING
+                    );
 
-            if (lastBlock.getType() == Material.AIR) {
-                continue;
-            }
+                if (owner != null)
+                {
+                    final UUID uuid = UUID.fromString(owner);
 
-            break;
-        }
+                    if (!player.getUniqueId().equals(uuid)) {
+                        player.sendMessage(CC.RED + "You cannot un-protect this chest as you do not own it!");
+                        terminable.closeAndReportException();
+                        return;
+                    }
 
-        return lastBlock;
+                    chest.getPersistentDataContainer().remove(this.plugin.ownerKey);
+                    player.sendMessage(CC.RED + "You are no longer protecting this chest!");
+
+                    terminable.closeAndReportException();
+                    return;
+                }
+
+                chest
+                    .getPersistentDataContainer()
+                    .set(
+                        this.plugin.ownerKey,
+                        PersistentDataType.STRING,
+                        player.getUniqueId().toString()
+                    );
+
+                player.sendMessage(
+                    CC.GREEN + "You are now protecting this chest!"
+                );
+
+                terminable.closeAndReportException();
+            })
+            .bindWith(terminable);
     }
 }

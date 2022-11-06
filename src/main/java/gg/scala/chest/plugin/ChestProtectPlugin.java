@@ -7,10 +7,13 @@ import gg.scala.commons.core.plugin.Plugin;
 import gg.scala.commons.core.plugin.PluginAuthor;
 import gg.scala.commons.core.plugin.PluginDependency;
 import me.lucko.helper.Events;
+import me.lucko.helper.metadata.MetadataKey;
+import me.lucko.helper.metadata.MetadataMap;
 import net.evilblock.cubed.util.CC;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -36,7 +39,10 @@ public class ChestProtectPlugin extends ExtendedScalaPlugin {
     @ContainerEnable
     public void containerEnable() {
         Events
-            .subscribe(PlayerInteractEvent.class)
+            .subscribe(
+                PlayerInteractEvent.class,
+                EventPriority.LOWEST
+            )
             .filter(event ->
                 event.getClickedBlock() != null &&
                     event.getClickedBlock() instanceof Chest
