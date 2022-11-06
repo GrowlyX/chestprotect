@@ -77,7 +77,7 @@ public class ChestProtectCommand extends ScalaCommand {
                 event.getClickedBlock() != null
             )
             .handler(event -> {
-                if (!(event.getClickedBlock() instanceof final Chest chest)) {
+                if (!(event.getClickedBlock().getState() instanceof final Chest chest)) {
                     player.sendMessage(CC.RED + "You did not click a chest block!");
                     terminable.closeAndReportException();
                     return;
