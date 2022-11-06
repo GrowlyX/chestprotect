@@ -1,0 +1,73 @@
+plugins {
+    id "java"
+    id "maven-publish"
+    id "com.github.johnrengelman.shadow" version "7.1.2"
+}
+
+group "gg.scala.chest.plugin"
+version "1.0.0"
+
+repositories {
+    mavenCentral()
+
+    maven {
+        url "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+    }
+
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+    maven { url "https://oss.sonatype.org/content/repositories/central" }
+
+    maven {
+        name "Scala"
+        url "${property("artifactory_contextUrl")}/gradle-release"
+
+        credentials {
+            username property("artifactory_user")
+            password property("artifactory_password")
+        }
+    }
+}
+
+dependencies {
+    compileOnly "gg.scala.commons:bukkit:3.0.6"
+    annotationProcessor "gg.scala.commons:bukkit:3.0.6"
+
+    compileOnly "org.spigotmc:spigot-api:1.19-R0.1-SNAPSHOT"
+}
+
+compileJava {
+    options.compilerArgs += ["-parameters"]
+
+    options.fork = true
+    options.encoding = "UTF-8"
+}
+
+shadowJar {
+    archiveClassifier.set("")
+    archiveFileName = "chestprotect.jar"
+}
+
+publishing {
+    publications {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
+        }
+    }
+
+    repositories {
+        maven {
+            name "scala"
+            url "${property("artifactory_contextUrl")}/gradle-release"
+
+            credentials {
+                username property("artifactory_user")
+                password property("artifactory_password")
+            }
+        }
+    }
+}
+
+tasks.build.dependsOn(
+    shadowJar,
+    publishShadowPublicationToScalaRepository
+)
