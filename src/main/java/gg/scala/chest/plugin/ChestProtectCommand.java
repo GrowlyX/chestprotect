@@ -100,6 +100,8 @@ public class ChestProtectCommand extends ScalaCommand {
                     }
 
                     chest.getPersistentDataContainer().remove(this.plugin.ownerKey);
+                    chest.update();
+
                     player.sendMessage(CC.RED + "You are no longer protecting this chest!");
 
                     terminable.closeAndReportException();
@@ -113,6 +115,7 @@ public class ChestProtectCommand extends ScalaCommand {
                         PersistentDataType.STRING,
                         player.getUniqueId().toString()
                     );
+                chest.update();
 
                 player.sendMessage(
                     CC.GREEN + "You are now protecting this chest!"
