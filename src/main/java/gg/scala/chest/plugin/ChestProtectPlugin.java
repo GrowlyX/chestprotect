@@ -45,15 +45,14 @@ public class ChestProtectPlugin extends ExtendedScalaPlugin {
             )
             .filter(event ->
                 event.getClickedBlock() != null &&
-                    event.getClickedBlock() instanceof Chest
+                event.getClickedBlock().getState() instanceof Chest
             )
             .handler(event -> {
-                final Chest chest = (Chest) event.getClickedBlock();
+                final Chest chest = (Chest) event
+                    .getClickedBlock().getState();
 
-                if (chest != null) {
-                    if (ensureChestOwnership(chest, event.getPlayer(), "open")) {
-                        event.setCancelled(true);
-                    }
+                if (ensureChestOwnership(chest, event.getPlayer(), "open")) {
+                    event.setCancelled(true);
                 }
             })
             .bindWith(this);
@@ -61,10 +60,10 @@ public class ChestProtectPlugin extends ExtendedScalaPlugin {
         Events
             .subscribe(BlockBreakEvent.class)
             .filter(event ->
-                event.getBlock() instanceof Chest
+                event.getBlock().getState() instanceof Chest
             )
             .handler(event -> {
-                final Chest chest = (Chest) event.getBlock();
+                final Chest chest = (Chest) event.getBlock().getState();
 
                 if (ensureChestOwnership(chest, event.getPlayer(), "break")) {
                     event.setCancelled(true);
