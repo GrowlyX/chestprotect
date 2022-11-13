@@ -10,10 +10,12 @@ import me.lucko.helper.Events;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Chest;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
@@ -70,6 +72,45 @@ public class ChestProtectPlugin extends ExtendedScalaPlugin {
                     if (ensureChestOwnership(
                         chest, (Player) event.getPlayer(), "open"
                     )) {
+                        event.setCancelled(true);
+                    }
+                }
+            })
+            .bindWith(this);
+
+        Events
+            .subscribe(
+                InventoryMoveItemEvent.class,
+                EventPriority.LOWEST
+            )
+            .filter(event ->
+                event.getInitiator().getHolder() instanceof Chest
+            )
+            .handler(event -> {
+                final Chest chest = (Chest) event
+                    .getInitiator().getHolder();
+
+                if (chest != null) {
+                    final PersistentDataContainer container = chest
+                        .getPersistentDataContainer();
+
+                    final String owner = container.get(
+                        this.ownerKey, PersistentDataType.STRING
+                    );
+
+                    if (owner != null) {
+                        if (!event.getDestination().getViewers().isEmpty())
+                        {
+                            final HumanEntity viewer = event
+                                .getDestination().getViewers().get(0);
+
+                            if (!viewer.getUniqueId().toString().equals(owner))
+                            {
+                                event.setCancelled(true);
+                            }
+                            return;
+                        }
+
                         event.setCancelled(true);
                     }
                 }
