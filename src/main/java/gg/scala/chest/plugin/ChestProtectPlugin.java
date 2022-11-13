@@ -9,6 +9,8 @@ import gg.scala.commons.core.plugin.PluginDependency;
 import me.lucko.helper.Events;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -17,6 +19,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +42,8 @@ public class ChestProtectPlugin extends ExtendedScalaPlugin {
 
     @ContainerEnable
     public void containerEnable() {
-        Events.subscribe(BlockExplodeEvent.class)
+        Events
+            .subscribe(BlockExplodeEvent.class)
             .handler(event -> {
                 if (event.getBlock().getState() instanceof Chest chest) {
                     final PersistentDataContainer container = chest
@@ -58,22 +62,22 @@ public class ChestProtectPlugin extends ExtendedScalaPlugin {
 
         Events
             .subscribe(
-                InventoryOpenEvent.class,
+                PlayerInteractEvent.class,
                 EventPriority.LOWEST
             )
             .filter(event ->
-                event.getInventory().getHolder() instanceof Chest
+                event.getAction().name().contains("RIGHT") &&
+                    event.getClickedBlock() != null &&
+                    event.getClickedBlock().getState() instanceof Chest
             )
             .handler(event -> {
                 final Chest chest = (Chest) event
-                    .getInventory().getHolder();
+                    .getClickedBlock().getState();
 
-                if (chest != null) {
-                    if (ensureChestOwnership(
-                        chest, (Player) event.getPlayer(), "open"
-                    )) {
-                        event.setCancelled(true);
-                    }
+                if (ensureChestOwnership(
+                    chest, event.getPlayer(), "open"
+                )) {
+                    event.setCancelled(true);
                 }
             })
             .bindWith(this);
@@ -99,13 +103,11 @@ public class ChestProtectPlugin extends ExtendedScalaPlugin {
                     );
 
                     if (owner != null) {
-                        if (!event.getDestination().getViewers().isEmpty())
-                        {
+                        if (!event.getDestination().getViewers().isEmpty()) {
                             final HumanEntity viewer = event
                                 .getDestination().getViewers().get(0);
 
-                            if (!viewer.getUniqueId().toString().equals(owner))
-                            {
+                            if (!viewer.getUniqueId().toString().equals(owner)) {
                                 event.setCancelled(true);
                             }
                             return;
@@ -133,7 +135,15 @@ public class ChestProtectPlugin extends ExtendedScalaPlugin {
     }
 
     private boolean ensureChestOwnership(
-        @NotNull Chest chest, @NotNull Player player, @NotNull String action
+        @NotNull Chest chest, @NotNull Player player,
+        @NotNull String action
+    ) {
+        return ensureChestOwnership(chest, player, action, true);
+    }
+
+    private boolean ensureChestOwnership(
+        @NotNull Chest chest, @NotNull Player player,
+        @NotNull String action, boolean recursiveSearch
     ) {
         final PersistentDataContainer container = chest
             .getPersistentDataContainer();
@@ -153,6 +163,18 @@ public class ChestProtectPlugin extends ExtendedScalaPlugin {
                     ChatColor.RED + "You cannot " + action + " this chest as " + username + " has locked it."
                 );
                 return true;
+            }
+        }
+
+        if (recursiveSearch) {
+            for (final BlockFace face : BlockFace.values()) {
+                final Block block = chest.getBlock().getRelative(face);
+
+                if (block.getState() instanceof Chest other) {
+                    if (ensureChestOwnership(other, player, action, false)) {
+                        return true;
+                    }
+                }
             }
         }
 
